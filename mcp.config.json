@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ollama": {
+      "command": "node",
+      "args": ["/path/to/ollama-mcp/dist/index.js"]
+    }
+  }
+}
+
