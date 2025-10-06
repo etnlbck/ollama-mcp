@@ -37,5 +37,5 @@ ENV OLLAMA_HOST=0.0.0.0:11434 \
     MCP_HTTP_PORT=8080
 
 ENTRYPOINT ["/bin/bash", "-lc"]
-CMD ["ollama serve & npm start"]
+CMD ["ollama serve & sleep 5 && ollama pull tinyllama & npm start"]
 
