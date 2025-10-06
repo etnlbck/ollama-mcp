@@ -78,14 +78,17 @@ This container image installs Ollama, exposes the Ollama API on port `11434`, an
 
 Railway uses the included `Dockerfile`, mounts the `ollama-models` volume defined in `railway.json`, and exposes port `11434` so your MCP server and Ollama API run together. Be sure to pin bigger model downloads or add the volume to keep models between deploys.
 
-If you need the MCP server available over HTTP (Streamable transport) instead of stdio, set:
+The Railway deployment automatically uses HTTP (Streamable) transport instead of stdio. The MCP server will be available at:
+
+- **MCP Endpoint**: `https://your-app.railway.app/mcp`
+- **Health Check**: `https://your-app.railway.app/healthz`
+- **Ollama API**: `https://your-app.railway.app:11434` (if exposed)
+
+For local development, you can still use stdio mode by default, or switch to HTTP mode with:
 
 ```bash
-MCP_TRANSPORT=http
-MCP_HTTP_PORT=8080  # or your desired port
+MCP_TRANSPORT=http npm start
 ```
-
-Railway will automatically route HTTP traffic to the configured port and keep the stdio transport disabled.
 
 ### Using with Claude Desktop
 

@@ -23,10 +23,12 @@ COPY dist ./dist
 
 RUN npm ci --omit=dev
 
-EXPOSE 11434
+EXPOSE 11434 8080
 
 ENV OLLAMA_HOST=0.0.0.0:11434 \
-    OLLAMA_MODELS=/data/ollama
+    OLLAMA_MODELS=/data/ollama \
+    MCP_TRANSPORT=http \
+    MCP_HTTP_PORT=8080
 
 ENTRYPOINT ["/bin/bash", "-lc"]
 CMD ["ollama serve & npm start"]

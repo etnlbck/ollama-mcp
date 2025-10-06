@@ -3,7 +3,9 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": null
+    "startCommand": null,
+    "healthcheckPath": "/healthz",
+    "healthcheckTimeout": 300
   },
   "volumes": [
     {
@@ -19,9 +21,12 @@
       "value": "http://127.0.0.1:11434"
     },
     "MCP_TRANSPORT": {
-      "value": "ws"
+      "value": "http"
     },
-    "MCP_WS_PORT": {
+    "MCP_HTTP_PORT": {
+      "value": "8080"
+    },
+    "PORT": {
       "value": "8080"
     }
   }
