@@ -17,7 +17,8 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /data/ollama && chown -R ollama:ollama /data/ollama
 
 # Copy project files
-COPY package.json package-lock.json tsconfig.json ./
+COPY package.json tsconfig.json ./
+COPY package-lock.json* ./
 COPY src ./src
 
 # Install all dependencies (including dev dependencies for building)
