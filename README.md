@@ -45,18 +45,28 @@ npm run build
 npm start
 ```
 
-### Running with Docker
+### Deploying with Docker
 
 ```bash
-docker build -t ollama-mcp .
-docker run \
-  --name ollama-mcp \
-  -p 11434:11434 \
-  -v $(pwd)/ollama-data:/data/ollama \
-  ollama-mcp
+npm run docker:build
+npm run docker:run
 ```
 
-This container image installs Ollama, exposes the Ollama API on port `11434`, persists models in `/data/ollama`, and starts the MCP server automatically.
+This container image installs Ollama, exposes the Ollama API on port `11434`, and persists models in `/data/ollama`.
+
+### Deploying on Railway
+
+1. Install the Railway CLI and log in:
+   ```bash
+   npm install -g @railway/cli
+   railway login
+   ```
+2. Deploy:
+   ```bash
+   railway up
+   ```
+
+Railway uses the included `Dockerfile`, mounts the `ollama-models` volume defined in `railway.json`, and exposes port `11434` so your MCP server and Ollama API run together. Be sure to pin bigger model downloads or add the volume to keep models between deploys.
 
 ### Using with Claude Desktop
 

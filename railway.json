@@ -1,0 +1,23 @@
+{
+  "build": {
+    "builder": "DOCKERFILE"
+  },
+  "deploy": {
+    "startCommand": null
+  },
+  "volumes": [
+    {
+      "name": "ollama-models",
+      "mountPath": "/data/ollama"
+    }
+  ],
+  "envVars": {
+    "OLLAMA_HOST": {
+      "value": "0.0.0.0:11434"
+    },
+    "OLLAMA_BASE_URL": {
+      "value": "http://127.0.0.1:11434"
+    }
+  }
+}
+
