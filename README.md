@@ -45,6 +45,19 @@ npm run build
 npm start
 ```
 
+### Running with Docker
+
+```bash
+docker build -t ollama-mcp .
+docker run \
+  --name ollama-mcp \
+  -p 11434:11434 \
+  -v $(pwd)/ollama-data:/data/ollama \
+  ollama-mcp
+```
+
+This container image installs Ollama, exposes the Ollama API on port `11434`, persists models in `/data/ollama`, and starts the MCP server automatically.
+
 ### Using with Claude Desktop
 
 Add this server to your Claude Desktop configuration:
