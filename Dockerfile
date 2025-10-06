@@ -24,8 +24,6 @@ RUN npm ci --omit=dev
 
 EXPOSE 11434
 
-VOLUME ["/data/ollama"]
-
 ENV OLLAMA_HOST=0.0.0.0:11434 \
     OLLAMA_MODELS=/data/ollama
 

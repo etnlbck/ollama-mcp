@@ -52,7 +52,7 @@ npm run docker:build
 npm run docker:run
 ```
 
-This container image installs Ollama, exposes the Ollama API on port `11434`, and persists models in `/data/ollama`.
+This container image installs Ollama, exposes the Ollama API on port `11434`, and expects a volume mounted at `/data/ollama` to persist models.
 
 ### Deploying on Railway
 
@@ -61,7 +61,11 @@ This container image installs Ollama, exposes the Ollama API on port `11434`, an
    npm install -g @railway/cli
    railway login
    ```
-2. Deploy:
+2. Create (or attach) a persistent volume for your models:
+   ```bash
+   railway volume add ollama-models --mount-path /data/ollama
+   ```
+3. Deploy:
    ```bash
    railway up
    ```
