@@ -292,9 +292,35 @@ The server can be configured via environment variables:
 | `MCP_HTTP_ALLOWED_ORIGINS` | CORS allowed origins (HTTP mode) | None |
 | `MCP_HTTP_ENABLE_DNS_PROTECTION` | Enable DNS rebinding protection | `false` |
 
-## Health Check
+## HTTP Endpoints
 
-When using HTTP transport, a health check endpoint is available:
+When using HTTP transport, several endpoints are available:
+
+### Root Endpoint
+
+```
+GET /
+```
+
+**Response:**
+```json
+{
+  "name": "Ollama MCP Server",
+  "version": "1.0.0",
+  "status": "running",
+  "protocol": "MCP (Model Context Protocol)",
+  "endpoints": {
+    "mcp": "POST /mcp - MCP protocol endpoint",
+    "health": "GET /healthz - Health check",
+    "tools": "GET /tools - List available tools (via MCP)",
+    "models": "GET /models - List available Ollama models (via MCP)"
+  },
+  "timestamp": "2025-10-06T14:37:21.512Z",
+  "uptime": 9.922
+}
+```
+
+### Health Check
 
 ```
 GET /healthz
@@ -304,5 +330,57 @@ GET /healthz
 ```json
 {
   "status": "ok"
+}
+```
+
+### Tools List
+
+```
+GET /tools
+```
+
+**Response:**
+```json
+{
+  "tools": [
+    {
+      "name": "ollama_list_models",
+      "description": "List all available Ollama models on the local machine",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    // ... other tools
+  ]
+}
+```
+
+### Models List
+
+```
+GET /models
+```
+
+**Response:**
+```json
+{
+  "models": [
+    {
+      "name": "llama2:latest",
+      "model": "llama2:latest",
+      "modified_at": "2024-01-01T00:00:00Z",
+      "size": 3825819519,
+      "digest": "sha256:...",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "llama",
+        "families": ["llama"],
+        "parameter_size": "7B",
+        "quantization_level": "Q4_0"
+      }
+    }
+  ]
 }
 ```
