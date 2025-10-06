@@ -19,9 +19,15 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* \
 # Copy project files
 COPY package.json package-lock.json tsconfig.json ./
 COPY src ./src
-COPY dist ./dist
 
-RUN npm ci --omit=dev
+# Install all dependencies (including dev dependencies for building)
+RUN npm ci
+
+# Build the project
+RUN npm run build
+
+# Remove dev dependencies to reduce image size
+RUN npm prune --production
 
 EXPOSE 11434 8080
 

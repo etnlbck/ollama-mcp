@@ -5,7 +5,7 @@
   "main": "dist/main.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "npx --package=typescript tsc",
     "dev": "tsx src/main.ts",
     "dev:stdio": "tsx src/main.ts",
     "dev:http": "MCP_TRANSPORT=http tsx src/main.ts",
