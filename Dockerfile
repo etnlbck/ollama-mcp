@@ -10,7 +10,8 @@ WORKDIR /usr/src/app
 # Install Ollama
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64.tgz -o /tmp/ollama.tgz \
-    && tar -xzvf /tmp/ollama.tgz -C /usr/local/bin ollama \
+    && tar -xzvf /tmp/ollama.tgz -C /usr/local \
+    && ln -s /usr/local/bin/ollama /usr/local/bin/ollama-cli \
     && rm /tmp/ollama.tgz \
     && adduser --system --group --no-create-home ollama \
     && mkdir -p /data/ollama && chown -R ollama:ollama /data/ollama
