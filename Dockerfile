@@ -2,14 +2,14 @@
 
 FROM node:20-bookworm
 
-ENV OLLAMA_VERSION=0.4.3 \
+ENV OLLAMA_VERSION=0.12.3 \
     NODE_ENV=production
 
 WORKDIR /usr/src/app
 
 # Install Ollama
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* \
-    && curl -fsSL https://ollama.com/download/Ollama-linux-amd64.tar.gz -o /tmp/ollama.tgz \
+    && curl -fsSL https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64.tgz -o /tmp/ollama.tgz \
     && tar -xzvf /tmp/ollama.tgz -C /usr/local/bin ollama \
     && rm /tmp/ollama.tgz \
     && adduser --system --group --no-create-home ollama \
