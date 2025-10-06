@@ -7,13 +7,13 @@ declare module 'express' {
     headers: { [key: string]: string | string[] | undefined };
     body: any;
   }
-  
+
   interface Response {
     status(code: number): Response;
     json(obj: any): Response;
     send(text: string): Response;
   }
-  
+
   interface Application {
     use(middleware: any): Application;
     post(path: string, handler: (req: Request, res: Response) => void): Application;
@@ -21,10 +21,10 @@ declare module 'express' {
     delete(path: string, handler: (req: Request, res: Response) => void): Application;
     listen(port: number, host: string, callback: () => void): void;
   }
-  
+
   function express(): Application;
   export = express;
-  export { Request, Response };
+  export { Request, Response, Application };
   export function json(): any;
 }
 

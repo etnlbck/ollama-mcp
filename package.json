@@ -2,15 +2,24 @@
   "name": "ollama-mcp-server",
   "version": "1.0.0",
   "description": "MCP server for interacting with Ollama locally",
-  "main": "dist/index.js",
+  "main": "dist/main.js",
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "start": "node dist/index.js",
+    "dev": "tsx src/main.ts",
+    "dev:stdio": "tsx src/main.ts",
+    "dev:http": "MCP_TRANSPORT=http tsx src/main.ts",
+    "start": "node dist/main.js",
+    "start:stdio": "node dist/main.js",
+    "start:http": "MCP_TRANSPORT=http node dist/main.js",
+    "test": "echo \"No tests yet\" && exit 0",
+    "lint": "echo \"No linter configured\" && exit 0",
+    "clean": "rm -rf dist",
     "docker:build": "docker build -t ollama-mcp .",
     "docker:run": "docker run --rm -p 11434:11434 -v ${PWD}/ollama-data:/data/ollama ollama-mcp",
-    "railway:up": "railway up"
+    "railway:up": "railway up",
+    "railway:shell": "railway shell",
+    "railway:logs": "railway logs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.19.1",

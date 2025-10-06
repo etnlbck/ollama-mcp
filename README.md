@@ -1,168 +1,238 @@
 # Ollama MCP Server
 
-An MCP (Model Context Protocol) server that provides tools to interact with Ollama models running on your local machine.
+A Model Context Protocol (MCP) server that provides tools for interacting with Ollama models. This server enables AI assistants to list, chat with, generate responses from, and manage Ollama models through a standardized protocol.
 
-## Features
+## 🚀 Features
 
-- **List Models**: Get all available Ollama models
-- **Chat**: Interactive chat with conversation history
-- **Generate**: Single prompt generation
-- **Pull Models**: Download new models from Ollama registry
-- **Delete Models**: Remove models from local installation
+- **Model Management**: List, pull, and delete Ollama models
+- **Chat Interface**: Multi-turn conversations with models
+- **Text Generation**: Single-prompt text generation
+- **Dual Transport**: Stdio (local) and HTTP (remote) support
+- **Railway Ready**: Pre-configured for Railway deployment
+- **Type Safe**: Full TypeScript implementation with strict typing
 
-## Prerequisites
+## 📋 Prerequisites
 
-- [Ollama](https://ollama.ai/) installed and running locally
-- Node.js 18+ and npm
+- Node.js 18+ 
+- Ollama installed and running locally
+- For Railway deployment: Railway CLI
 
-## Installation
+## 🛠️ Installation
 
-1. Clone or download this repository
-2. Install dependencies:
+### Local Development
 
-```bash
-npm install
+1. **Clone and install dependencies:**
+   ```bash
+   git clone <repository-url>
+   cd ollama-mcp
+   npm install
+   ```
+
+2. **Build the project:**
+   ```bash
+   npm run build
+   ```
+
+3. **Start the server:**
+   ```bash
+   npm start
+   ```
+
+### Using with Cursor
+
+Add this to your Cursor MCP configuration (`~/.cursor/mcp/config.json`):
+
+```json
+{
+  "mcpServers": {
+    "ollama": {
+      "command": "node",
+      "args": ["/path/to/ollama-mcp/dist/main.js"]
+    }
+  }
+}
 ```
 
-1. Build the project:
-
+**Quick setup:**
 ```bash
-npm run build
+curl -sSL https://raw.githubusercontent.com/your-repo/ollama-mcp/main/config/mcp.config.json -o ~/.cursor/mcp/config.json
 ```
 
-## Usage
+## 🏗️ Architecture
 
-### Development Mode
+The project is structured for maximum readability and maintainability:
 
-```bash
-npm run dev
+```
+src/
+├── main.ts                 # Main entry point
+├── config/                 # Configuration management
+├── server/                 # Core MCP server
+├── tools/                  # MCP tool implementations
+├── transports/             # Communication transports
+└── ollama-client.ts        # Ollama API client
+
+docs/                       # Comprehensive documentation
+config/                     # Configuration files
+scripts/                    # Deployment scripts
 ```
 
-### Production Mode
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCP_TRANSPORT` | Transport type (`stdio` or `http`) | `stdio` |
+| `OLLAMA_BASE_URL` | Ollama API base URL | `http://localhost:11434` |
+| `MCP_HTTP_HOST` | HTTP server host (HTTP mode) | `0.0.0.0` |
+| `MCP_HTTP_PORT` | HTTP server port (HTTP mode) | `8080` |
+| `MCP_HTTP_ALLOWED_ORIGINS` | CORS allowed origins (HTTP mode) | None |
+
+### Transport Modes
+
+#### Stdio Transport (Default)
+Perfect for local development and direct integration:
 
 ```bash
-npm run build
 npm start
 ```
 
-- Set `MCP_TRANSPORT=stdio` (default) to run via stdio.
-- Set `MCP_TRANSPORT=http` to expose the MCP server via the Streamable HTTP transport. Optional overrides:
-  - `MCP_HTTP_PORT` (defaults to `8080`, Railway’s `PORT` is respected automatically)
-  - `MCP_HTTP_HOST` (defaults to `0.0.0.0`)
-  - `MCP_HTTP_ALLOWED_ORIGINS` (comma-separated list)
-
-### Deploying with Docker
-
-```bash
-npm run docker:build
-npm run docker:run
-```
-
-This container image installs Ollama, exposes the Ollama API on port `11434`, and expects a volume mounted at `/data/ollama` to persist models.
-
-### Deploying on Railway
-
-1. Install the Railway CLI and log in:
-   ```bash
-   npm install -g @railway/cli
-   railway login
-   ```
-2. Create (or attach) a persistent volume for your models:
-   ```bash
-   railway volume add --mount-path /data/ollama
-   ```
-3. Deploy:
-   ```bash
-   railway up
-   ```
-
-Railway uses the included `Dockerfile`, mounts the `ollama-models` volume defined in `railway.json`, and exposes port `11434` so your MCP server and Ollama API run together. Be sure to pin bigger model downloads or add the volume to keep models between deploys.
-
-The Railway deployment automatically uses HTTP (Streamable) transport instead of stdio. The MCP server will be available at:
-
-- **MCP Endpoint**: `https://your-app.railway.app/mcp`
-- **Health Check**: `https://your-app.railway.app/healthz`
-- **Ollama API**: `https://your-app.railway.app:11434` (if exposed)
-
-For local development, you can still use stdio mode by default, or switch to HTTP mode with:
+#### HTTP Transport
+Ideal for remote deployment and web-based clients:
 
 ```bash
 MCP_TRANSPORT=http npm start
 ```
 
-### Using with Claude Desktop
+## 🚀 Deployment
 
-Add this server to your Claude Desktop configuration:
+### Railway Deployment
 
-```json
-{
-  "mcpServers": {
-    "ollama": {
-      "command": "node",
-      "args": ["/path/to/ollama-mcp/dist/index.js"]
-    }
-  }
-}
-```
+1. **Install Railway CLI:**
+   ```bash
+   npm install -g @railway/cli
+   railway login
+   ```
 
-### Using with Cursor
+2. **Deploy:**
+   ```bash
+   railway up
+   ```
 
-If you're using [Cursor](https://cursor.com/), add the server to your MCP configuration file at `~/.cursor/mcp/config.json`:
+3. **Add models (optional):**
+   ```bash
+   railway shell
+   # Follow instructions in docs/RAILWAY_MODELS_SETUP.md
+   ```
 
-```json
-{
-  "mcpServers": {
-    "ollama": {
-      "command": "node",
-      "args": ["/path/to/ollama-mcp/dist/index.js"]
-    }
-  }
-}
-```
+The Railway deployment automatically uses HTTP transport and exposes:
+- **MCP Endpoint**: `https://your-app.railway.app/mcp`
+- **Health Check**: `https://your-app.railway.app/healthz`
 
-Alternatively, you can copy the ready-made config shipped with this repo:
+### Docker Deployment
 
 ```bash
-mkdir -p ~/.cursor/mcp
-cp /path/to/ollama-mcp/mcp.config.json ~/.cursor/mcp/config.json
+# Build the image
+npm run docker:build
+
+# Run locally
+npm run docker:run
+
+# Deploy to Railway
+railway up
 ```
 
-## Available Tools
+## 📚 Available Tools
 
-### `ollama_list_models`
+The server provides 5 MCP tools for Ollama interaction:
 
-Lists all available Ollama models on your system.
+1. **`ollama_list_models`** - List available models
+2. **`ollama_chat`** - Multi-turn conversations
+3. **`ollama_generate`** - Single-prompt generation
+4. **`ollama_pull_model`** - Download models
+5. **`ollama_delete_model`** - Remove models
 
-### `ollama_chat`
+See [API.md](docs/API.md) for detailed API documentation.
 
-Chat with a model using conversation history.
+## 🧪 Testing
 
-- `model`: Name of the Ollama model
-- `messages`: Array of message objects with `role` ('system', 'user', 'assistant') and `content`
+### Local Testing
 
-### `ollama_generate`
+```bash
+# Test stdio transport
+npm start
 
-Generate a response from a single prompt.
+# Test HTTP transport
+MCP_TRANSPORT=http npm start
 
-- `model`: Name of the Ollama model
-- `prompt`: The input prompt
+# Test health check (HTTP mode)
+curl http://localhost:8080/healthz
+```
 
-### `ollama_pull_model`
+### Model Testing
 
-Download a model from the Ollama registry.
+```bash
+# List available models
+ollama list
 
-- `model`: Name of the model to download
+# Test a model
+ollama run llama2 "Hello, how are you?"
+```
 
-### `ollama_delete_model`
+## 📖 Documentation
 
-Remove a model from your local installation.
+- [Architecture](docs/ARCHITECTURE.md) - Detailed system architecture
+- [API Reference](docs/API.md) - Complete API documentation
+- [Railway Setup](docs/RAILWAY_MODELS_SETUP.md) - Model deployment guide
 
-- `model`: Name of the model to delete
+## 🤝 Contributing
 
-## Configuration
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-Set the `OLLAMA_BASE_URL` environment variable to change the Ollama server URL (default: `http://localhost:11434`).
+## 📄 License
 
-## License
+MIT License - see [LICENSE](LICENSE) for details.
 
-MIT
+## 🆘 Troubleshooting
+
+### Common Issues
+
+**"Cannot find module" errors:**
+```bash
+npm install
+npm run build
+```
+
+**Ollama connection issues:**
+```bash
+# Check if Ollama is running
+ollama list
+
+# Check Ollama service
+ollama serve
+```
+
+**Railway deployment issues:**
+```bash
+# Check Railway logs
+railway logs
+
+# Verify environment variables
+railway variables
+```
+
+### Getting Help
+
+- Check the [documentation](docs/)
+- Review [troubleshooting guide](docs/TROUBLESHOOTING.md)
+- Open an issue on GitHub
+
+---
+
+**Built with ❤️ for the AI community**
