@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 
+import express from 'express';
+import { randomUUID } from 'crypto';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
   Tool,
+  InitializeRequest,
 } from '@modelcontextprotocol/sdk/types.js';
 import { OllamaClient, ChatMessage } from './ollama-client.js';
 
@@ -16,7 +20,11 @@ class OllamaMCPServer {
   private server: Server;
 
   constructor() {
-    this.server = new Server(
+    this.server = this.createServer();
+  }
+
+  private createServer(): Server {
+    const server = new Server(
       {
         name: 'ollama-mcp-server',
         version: '1.0.0',
@@ -28,23 +36,25 @@ class OllamaMCPServer {
       }
     );
 
-    this.setupToolHandlers();
-    this.setupErrorHandling();
+    this.setupToolHandlers(server);
+    this.setupErrorHandling(server);
+
+    return server;
   }
 
-  private setupErrorHandling(): void {
-    this.server.onerror = (error) => {
+  private setupErrorHandling(server: Server): void {
+    server.onerror = (error) => {
       console.error('[MCP Error]', error);
     };
 
     process.on('SIGINT', async () => {
-      await this.server.close();
+      await server.close();
       process.exit(0);
     });
   }
 
-  private setupToolHandlers(): void {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+  private setupToolHandlers(server: Server): void {
+    server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
         tools: [
           {
@@ -138,7 +148,7 @@ class OllamaMCPServer {
       };
     });
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
       try {
@@ -235,10 +245,115 @@ class OllamaMCPServer {
     });
   }
 
+  private isInitializeRequest(payload: unknown): payload is InitializeRequest {
+    return (
+      typeof payload === 'object' &&
+      payload !== null &&
+      'method' in payload &&
+      (payload as { method: string }).method === 'initialize'
+    );
+  }
+
   async run(): Promise<void> {
+    const transportType = (process.env.MCP_TRANSPORT || 'stdio').toLowerCase();
+
+    if (transportType === 'http' || transportType === 'streamable') {
+      await this.runHttpServer();
+      return;
+    }
+
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     console.error('Ollama MCP Server running on stdio');
+  }
+
+  private async runHttpServer(): Promise<void> {
+    const host = process.env.MCP_HTTP_HOST || '0.0.0.0';
+    const port = Number(process.env.PORT ?? process.env.MCP_HTTP_PORT ?? 8080);
+
+    if (Number.isNaN(port) || port <= 0) {
+      throw new Error('Invalid HTTP port specified for MCP server');
+    }
+
+    const allowedOrigins = process.env.MCP_HTTP_ALLOWED_ORIGINS
+      ?.split(',')
+      .map((origin: string) => origin.trim())
+      .filter(Boolean);
+
+    const app = express();
+    app.use(express.json());
+
+    const transports: Record<string, StreamableHTTPServerTransport> = {};
+
+    app.post('/mcp', async (req: express.Request, res: express.Response) => {
+      const sessionId = req.headers['mcp-session-id'] as string | undefined;
+      let transport: StreamableHTTPServerTransport | undefined;
+
+      if (sessionId && transports[sessionId]) {
+        transport = transports[sessionId];
+      } else if (!sessionId && this.isInitializeRequest(req.body)) {
+        transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: () => randomUUID(),
+          onsessioninitialized: (id: string) => {
+            if (id) {
+              transports[id] = transport as StreamableHTTPServerTransport;
+            }
+          },
+          allowedOrigins,
+          enableDnsRebindingProtection:
+            process.env.MCP_HTTP_ENABLE_DNS_PROTECTION === 'true',
+        });
+
+        transport.onclose = () => {
+          if (transport?.sessionId) {
+            delete transports[transport.sessionId];
+          }
+        };
+
+        const server = this.createServer();
+        await server.connect(transport);
+      }
+
+      if (!transport) {
+        res.status(400).json({
+          jsonrpc: '2.0',
+          error: {
+            code: -32000,
+            message: 'Bad Request: No valid session ID provided',
+          },
+          id: null,
+        });
+        return;
+      }
+
+      await transport.handleRequest(req, res, req.body);
+    });
+
+    const handleSessionRequest = async (
+      req: express.Request,
+      res: express.Response
+    ) => {
+      const sessionId = req.headers['mcp-session-id'] as string | undefined;
+      if (!sessionId || !transports[sessionId]) {
+        res.status(400).send('Invalid or missing session ID');
+        return;
+      }
+
+      const transport = transports[sessionId];
+      await transport.handleRequest(req, res);
+    };
+
+    app.get('/mcp', handleSessionRequest);
+    app.delete('/mcp', handleSessionRequest);
+    app.get('/healthz', (_req: express.Request, res: express.Response) => {
+      res.status(200).json({ status: 'ok' });
+    });
+
+    app.listen(port, host, () => {
+      console.error(
+        `Ollama MCP Server running on Streamable HTTP at http://${host}:${port}/mcp`
+      );
+    });
   }
 }
 

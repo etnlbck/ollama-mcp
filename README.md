@@ -45,6 +45,12 @@ npm run build
 npm start
 ```
 
+- Set `MCP_TRANSPORT=stdio` (default) to run via stdio.
+- Set `MCP_TRANSPORT=http` to expose the MCP server via the Streamable HTTP transport. Optional overrides:
+  - `MCP_HTTP_PORT` (defaults to `8080`, Railway’s `PORT` is respected automatically)
+  - `MCP_HTTP_HOST` (defaults to `0.0.0.0`)
+  - `MCP_HTTP_ALLOWED_ORIGINS` (comma-separated list)
+
 ### Deploying with Docker
 
 ```bash
@@ -63,7 +69,7 @@ This container image installs Ollama, exposes the Ollama API on port `11434`, an
    ```
 2. Create (or attach) a persistent volume for your models:
    ```bash
-   railway volume add ollama-models --mount-path /data/ollama
+   railway volume add --mount-path /data/ollama
    ```
 3. Deploy:
    ```bash
@@ -71,6 +77,15 @@ This container image installs Ollama, exposes the Ollama API on port `11434`, an
    ```
 
 Railway uses the included `Dockerfile`, mounts the `ollama-models` volume defined in `railway.json`, and exposes port `11434` so your MCP server and Ollama API run together. Be sure to pin bigger model downloads or add the volume to keep models between deploys.
+
+If you need the MCP server available over HTTP (Streamable transport) instead of stdio, set:
+
+```bash
+MCP_TRANSPORT=http
+MCP_HTTP_PORT=8080  # or your desired port
+```
+
+Railway will automatically route HTTP traffic to the configured port and keep the stdio transport disabled.
 
 ### Using with Claude Desktop
 
