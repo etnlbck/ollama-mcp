@@ -32,4 +32,5 @@ declare var process: {
   env: { [key: string]: string | undefined };
   on(event: string, listener: (...args: any[]) => void): void;
   exit(code: number): void;
+  uptime(): number;
 };

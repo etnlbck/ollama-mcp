@@ -29,6 +29,27 @@ export class HTTPTransport {
   }
 
   private setupRoutes(): void {
+    // Root endpoint - Server information
+    this.app.get('/', (_req: express.Request, res: express.Response) => {
+      const uptime = process.uptime();
+      const timestamp = new Date().toISOString();
+      
+      res.status(200).json({
+        name: 'Ollama MCP Server',
+        version: '1.0.0',
+        status: 'running',
+        protocol: 'MCP (Model Context Protocol)',
+        endpoints: {
+          mcp: 'POST /mcp - MCP protocol endpoint',
+          health: 'GET /healthz - Health check',
+          tools: 'GET /tools - List available tools (via MCP)',
+          models: 'GET /models - List available Ollama models (via MCP)'
+        },
+        timestamp,
+        uptime: Math.round(uptime * 1000) / 1000
+      });
+    });
+
     // Main MCP endpoint
     this.app.post('/mcp', async (req: express.Request, res: express.Response) => {
       await this.handleMCPRequest(req, res);
@@ -46,6 +67,122 @@ export class HTTPTransport {
     // Health check endpoint
     this.app.get('/healthz', (_req: express.Request, res: express.Response) => {
       res.status(200).json({ status: 'ok' });
+    });
+
+    // Convenience endpoints for easy access to MCP tools
+    this.app.get('/tools', async (_req: express.Request, res: express.Response) => {
+      try {
+        // Return the available tools directly
+        const tools = [
+          {
+            name: 'ollama_list_models',
+            description: 'List all available Ollama models on the local machine',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+            },
+          },
+          {
+            name: 'ollama_chat',
+            description: 'Chat with an Ollama model using conversation history',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                model: {
+                  type: 'string',
+                  description: 'The name of the Ollama model to use',
+                },
+                messages: {
+                  type: 'array',
+                  description: 'Array of chat messages with role and content',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      role: {
+                        type: 'string',
+                        enum: ['system', 'user', 'assistant'],
+                        description: 'The role of the message sender',
+                      },
+                      content: {
+                        type: 'string',
+                        description: 'The content of the message',
+                      },
+                    },
+                    required: ['role', 'content'],
+                  },
+                },
+              },
+              required: ['model', 'messages'],
+            },
+          },
+          {
+            name: 'ollama_generate',
+            description: 'Generate a response from an Ollama model with a single prompt',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                model: {
+                  type: 'string',
+                  description: 'The name of the Ollama model to use',
+                },
+                prompt: {
+                  type: 'string',
+                  description: 'The prompt to send to the model',
+                },
+              },
+              required: ['model', 'prompt'],
+            },
+          },
+          {
+            name: 'ollama_pull_model',
+            description: 'Pull/download a model from the Ollama registry',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                model: {
+                  type: 'string',
+                  description: 'The name of the model to pull (e.g., llama2, mistral)',
+                },
+              },
+              required: ['model'],
+            },
+          },
+          {
+            name: 'ollama_delete_model',
+            description: 'Delete a model from the local Ollama installation',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                model: {
+                  type: 'string',
+                  description: 'The name of the model to delete',
+                },
+              },
+              required: ['model'],
+            },
+          },
+        ];
+
+        res.status(200).json({ tools });
+      } catch (error) {
+        res.status(500).json({
+          error: 'Failed to list tools',
+          message: error instanceof Error ? error.message : String(error)
+        });
+      }
+    });
+
+    this.app.get('/models', async (_req: express.Request, res: express.Response) => {
+      try {
+        const ollamaClient = new OllamaClient(process.env.OLLAMA_BASE_URL || 'http://localhost:11434');
+        const models = await ollamaClient.listModels();
+        res.status(200).json({ models });
+      } catch (error) {
+        res.status(500).json({
+          error: 'Failed to list models',
+          message: error instanceof Error ? error.message : String(error)
+        });
+      }
     });
   }
 
