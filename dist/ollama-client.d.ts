@@ -28,9 +28,22 @@ export interface ChatResponse {
     eval_duration?: number;
     eval_count?: number;
 }
+export interface OllamaClientOptions {
+    baseUrl?: string;
+    apiKey?: string;
+    cloudBaseUrl?: string;
+}
 export declare class OllamaClient {
     private baseUrl;
-    constructor(baseUrl?: string);
+    private apiKey?;
+    private cloudBaseUrl;
+    constructor(baseUrlOrOptions?: string | OllamaClientOptions);
+    static isCloudModel(model: string): boolean;
+    static normalizeCloudModelForRemoteApi(model: string): string;
+    private getHeaders;
+    private resolveEndpoint;
+    private formatHttpError;
+    private request;
     listModels(): Promise<OllamaModel[]>;
     chat(model: string, messages: ChatMessage[]): Promise<ChatResponse>;
     pullModel(model: string): Promise<void>;

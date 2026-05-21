@@ -5,9 +5,10 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, } from '@modelcontextprotocol/sdk/types.js';
-import { OllamaClient } from './ollama-client.js';
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const ollama = new OllamaClient(OLLAMA_BASE_URL);
+import { loadConfig, validateConfig, createOllamaClient } from './config/server-config.js';
+const config = loadConfig();
+validateConfig(config);
+const ollama = createOllamaClient(config);
 class OllamaMCPServer {
     server;
     constructor() {

@@ -2,8 +2,10 @@
   "mcpServers": {
     "ollama": {
       "command": "node",
-      "args": ["/path/to/ollama-mcp/dist/index.js"]
+      "args": ["/path/to/ollama-mcp/dist/main.js"],
+      "env": {
+        "OLLAMA_API_KEY": "<your-key-from-ollama.com/settings/keys>"
+      }
     }
   }
 }
-

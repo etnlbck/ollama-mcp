@@ -287,10 +287,20 @@ The server can be configured via environment variables:
 |----------|-------------|---------|
 | `MCP_TRANSPORT` | Transport type (`stdio` or `http`) | `stdio` |
 | `OLLAMA_BASE_URL` | Ollama API base URL | `http://localhost:11434` |
+| `OLLAMA_API_KEY` | Bearer token for Ollama Cloud API; auto-routes `*-cloud` models to `ollama.com` | None |
+| `OLLAMA_CLOUD_BASE_URL` | Cloud API host when routing cloud models with an API key | `https://ollama.com` |
 | `MCP_HTTP_HOST` | HTTP server host (HTTP mode) | `0.0.0.0` |
 | `MCP_HTTP_PORT` | HTTP server port (HTTP mode) | `8080` |
 | `MCP_HTTP_ALLOWED_ORIGINS` | CORS allowed origins (HTTP mode) | None |
 | `MCP_HTTP_ENABLE_DNS_PROTECTION` | Enable DNS rebinding protection | `false` |
+
+### Cloud model authentication
+
+- **Local daemon**: Use `OLLAMA_BASE_URL=http://localhost:11434` and `ollama signin` for cloud models (`model` names ending in `-cloud`).
+- **API key**: Set `OLLAMA_API_KEY`; `ollama_chat` and `ollama_generate` send cloud models to `https://ollama.com/api` with `Authorization: Bearer <key>`, normalizing model names (e.g. `gpt-oss:120b-cloud` → `gpt-oss:120b`).
+- **Cloud-only host**: Set `OLLAMA_BASE_URL=https://ollama.com` and `OLLAMA_API_KEY` so all API calls use the cloud host.
+
+On Railway, add `OLLAMA_API_KEY` as a project secret (do not commit it to `railway.json`).
 
 ## HTTP Endpoints
 

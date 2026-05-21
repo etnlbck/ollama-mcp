@@ -47,7 +47,10 @@ Add this to your Cursor MCP configuration (`~/.cursor/mcp/config.json`):
   "mcpServers": {
     "ollama": {
       "command": "node",
-      "args": ["/path/to/ollama-mcp/dist/main.js"]
+      "args": ["/path/to/ollama-mcp/dist/main.js"],
+      "env": {
+        "OLLAMA_API_KEY": "<your-key-from-ollama.com/settings/keys>"
+      }
     }
   }
 }
@@ -86,9 +89,20 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentat
 |----------|-------------|---------|
 | `MCP_TRANSPORT` | Transport type (`stdio` or `http`) | `stdio` |
 | `OLLAMA_BASE_URL` | Ollama API base URL | `http://localhost:11434` |
+| `OLLAMA_API_KEY` | API key for Ollama Cloud (`ollama.com`); required for cloud models when not using `ollama signin` | None |
+| `OLLAMA_CLOUD_BASE_URL` | Ollama Cloud API base URL (used when routing `*-cloud` models with an API key) | `https://ollama.com` |
 | `MCP_HTTP_HOST` | HTTP server host (HTTP mode) | `0.0.0.0` |
 | `MCP_HTTP_PORT` | HTTP server port (HTTP mode) | `8080` |
 | `MCP_HTTP_ALLOWED_ORIGINS` | CORS allowed origins (HTTP mode) | None |
+
+### Cloud models
+
+Ollama cloud models (names ending in `-cloud`, e.g. `gpt-oss:120b-cloud`) can be used in two ways:
+
+1. **Local Ollama** — Keep `OLLAMA_BASE_URL` at `http://localhost:11434` and run `ollama signin` so the daemon authenticates cloud requests.
+2. **API key** — Set `OLLAMA_API_KEY` (from [ollama.com/settings/keys](https://ollama.com/settings/keys)). Cloud chat/generate requests are sent to `ollama.com` with a Bearer token automatically.
+
+For cloud-only deployments (e.g. Railway without `ollama signin`), set `OLLAMA_BASE_URL=https://ollama.com` and `OLLAMA_API_KEY` as a secret.
 
 ### Transport Modes
 

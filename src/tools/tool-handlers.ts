@@ -61,7 +61,8 @@ function getAvailableTools(): Tool[] {
     },
     {
       name: 'ollama_chat',
-      description: 'Chat with an Ollama model using conversation history',
+      description:
+        'Chat with an Ollama model using conversation history. Cloud models use names ending in -cloud (e.g. gpt-oss:120b-cloud). With OLLAMA_API_KEY set, cloud inference is sent to ollama.com automatically; without it, local cloud models require `ollama signin` on the Ollama daemon.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -94,7 +95,8 @@ function getAvailableTools(): Tool[] {
     },
     {
       name: 'ollama_generate',
-      description: 'Generate a response from an Ollama model with a single prompt',
+      description:
+        'Generate a response from an Ollama model with a single prompt. Cloud models use names ending in -cloud; with OLLAMA_API_KEY set, requests route to ollama.com automatically.',
       inputSchema: {
         type: 'object',
         properties: {

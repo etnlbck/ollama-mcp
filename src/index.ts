@@ -11,10 +11,12 @@ import {
   Tool,
   InitializeRequest,
 } from '@modelcontextprotocol/sdk/types.js';
-import { OllamaClient, ChatMessage } from './ollama-client.js';
+import { ChatMessage } from './ollama-client.js';
+import { loadConfig, validateConfig, createOllamaClient } from './config/server-config.js';
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const ollama = new OllamaClient(OLLAMA_BASE_URL);
+const config = loadConfig();
+validateConfig(config);
+const ollama = createOllamaClient(config);
 
 class OllamaMCPServer {
   private server: Server;

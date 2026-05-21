@@ -12,13 +12,26 @@ export interface HTTPTransportConfig {
   enableDnsRebindingProtection?: boolean;
 }
 
+export interface MCPServerInfo {
+  name: string;
+  version: string;
+}
+
 export class HTTPTransport {
   private config: HTTPTransportConfig;
+  private ollamaClient: OllamaClient;
+  private mcpServerInfo: MCPServerInfo;
   private app: express.Application;
   private sessions: Map<string, StreamableHTTPServerTransport> = new Map();
 
-  constructor(config: HTTPTransportConfig) {
+  constructor(
+    config: HTTPTransportConfig,
+    ollamaClient: OllamaClient,
+    mcpServerInfo: MCPServerInfo = { name: 'ollama-mcp-server', version: '1.0.0' }
+  ) {
     this.config = config;
+    this.ollamaClient = ollamaClient;
+    this.mcpServerInfo = mcpServerInfo;
     this.app = express();
     this.setupMiddleware();
     this.setupRoutes();
@@ -174,8 +187,7 @@ export class HTTPTransport {
 
     this.app.get('/models', async (_req: express.Request, res: express.Response) => {
       try {
-        const ollamaClient = new OllamaClient(process.env.OLLAMA_BASE_URL || 'http://localhost:11434');
-        const models = await ollamaClient.listModels();
+        const models = await this.ollamaClient.listModels();
         res.status(200).json({ models });
       } catch (error) {
         res.status(500).json({
@@ -209,7 +221,11 @@ export class HTTPTransport {
         return;
       }
 
-      await transport.handleRequest(req, res, req.body);
+      await transport.handleRequest(
+        req as unknown as Parameters<StreamableHTTPServerTransport['handleRequest']>[0],
+        res as unknown as Parameters<StreamableHTTPServerTransport['handleRequest']>[1],
+        req.body
+      );
     } catch (error) {
       console.error('[MCP HTTP Error]', error);
       res.status(500).json({
@@ -232,7 +248,10 @@ export class HTTPTransport {
       }
 
       const transport = this.sessions.get(sessionId)!;
-      await transport.handleRequest(req, res);
+      await transport.handleRequest(
+        req as unknown as Parameters<StreamableHTTPServerTransport['handleRequest']>[0],
+        res as unknown as Parameters<StreamableHTTPServerTransport['handleRequest']>[1]
+      );
     } catch (error) {
       console.error('[MCP HTTP Error]', error);
       res.status(500).json({
@@ -264,15 +283,13 @@ export class HTTPTransport {
       }
     };
 
-    // Create a new MCP server instance for this session
-    const ollamaClient = new OllamaClient(process.env.OLLAMA_BASE_URL || 'http://localhost:11434');
     const mcpServer = new MCPServer(
       {
-        name: 'ollama-mcp-server',
-        version: '1.0.0',
+        name: this.mcpServerInfo.name,
+        version: this.mcpServerInfo.version,
         capabilities: { tools: {} },
       },
-      ollamaClient
+      this.ollamaClient
     );
 
     await mcpServer.getServer().connect(transport);
